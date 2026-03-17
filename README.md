@@ -42,7 +42,3 @@ curl -X POST http://127.0.0.1:3030/telemetry \
 - [ ] **Protobuf Support**: Transition from JSON to Protobuf for wire-efficiency.
 - [ ] **Stream Persistence**: Direct integration with high-speed persistence layers (PostgreSQL/TimescaleDB).
 - [ ] **Simulation Replay**: A lightweight agent to replay telemetry streams for team testing.
-
----
-
-*Build by Mara for Karl Hill.*
