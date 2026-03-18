@@ -1,57 +1,57 @@
-use axum::{
-    routing::{get, post},
-    Json, Router,
-};
-use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
+use clap::Parser;
 use std::net::SocketAddr;
+use std::sync::Arc;
 use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
-use uuid::Uuid;
+use drift_rs::telemetry::state::SharedState;
+use drift_rs::api;
 
-#[derive(Debug, Serialize, Deserialize)]
-struct TelemetryPacket {
-    #[serde(default = "Uuid::new_v4")]
-    id: Uuid,
-    source_id: String,
-    timestamp: DateTime<Utc>,
-    instrument_id: String,
-    readings: serde_json::Value,
-}
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// Port to listen on
+    #[arg(short, long, default_value_t = 3030)]
+    port: u16,
 
-#[derive(Serialize)]
-struct StatusResponse {
-    status: String,
-    uptime_seconds: u64,
+    /// Log level (trace, debug, info, warn, error)
+    #[arg(short, long, default_value = "info")]
+    log_level: String,
+
+    /// Memory buffer capacity for telemetry
+    #[arg(short, long, default_value_t = 1000)]
+    capacity: usize,
 }
 
 #[tokio::main]
-async fn main() {
-    // a basic tracing subscriber
+async fn main() -> anyhow::Result<()> {
+    let args = Args::parse();
+
+    // Advanced Tracing Configuration
+    let level = match args.log_level.to_lowercase().as_str() {
+        "trace" => Level::TRACE,
+        "debug" => Level::DEBUG,
+        "info" => Level::INFO,
+        "warn" => Level::WARN,
+        "error" => Level::ERROR,
+        _ => Level::INFO,
+    };
+
     let subscriber = FmtSubscriber::builder()
-        .with_max_level(Level::INFO)
+        .with_max_level(level)
         .finish();
     tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 
-    let app = Router::new()
-        .route("/health", get(health_check))
-        .route("/telemetry", post(ingest_telemetry));
+    // Initialize Shared State
+    let state = Arc::new(SharedState::new(args.capacity));
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3030));
-    info!("Drift telemetry sink listening on {}", addr);
+    let app = api::create_router(state);
 
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
-}
+    let addr = SocketAddr::from(([0, 0, 0, 0], args.port));
+    info!("Drift telemetry engine listening on {}", addr);
+    info!("Buffer capacity: {} packets", args.capacity);
 
-async fn health_check() -> Json<StatusResponse> {
-    Json(StatusResponse {
-        status: "operational".to_string(),
-        uptime_seconds: 0, // mock uptime
-    })
-}
+    let listener = tokio::net::TcpListener::bind(addr).await?;
+    axum::serve(listener, app).await?;
 
-async fn ingest_telemetry(Json(payload): Json<TelemetryPacket>) -> Json<serde_json::Value> {
-    info!("Ingested packet from source: {}", payload.source_id);
-    Json(serde_json::json!({ "id": payload.id, "status": "received" }))
+    Ok(())
 }

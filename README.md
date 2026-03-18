@@ -1,44 +1,69 @@
-# Drift (Telemetry Sink)
+# 🛰️ Drift-RS: High-Performance Aerospace Telemetry Engine
 
-A fast, lightweight, and memory-safe telemetry and simulation data sink for aerospace and satellite operations, written in Rust.
+[![Rust](https://img.shields.io/badge/rust-stable-brightgreen.svg)](https://www.rust-lang.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Why Rust?
+**Drift-RS** is a professional-grade telemetry ingestion sink designed for the demanding requirements of modern aerospace and satellite operations. Built with Rust for safety and performance, it provides a robust architecture for high-throughput data processing and validation.
 
-Given your work at **Jacobs/BlackLynx** on mission simulation and telemetry services, you need high throughput, low latency, and zero-cost abstractions. **Drift-rs** is a playground for exploring how Rust's safety guarantees and performance profile fit into the mission-critical aerospace landscape.
+## 🚀 Key Features
 
-## Core Pillars
+- **Blazing Fast Ingestion:** Built on `axum` and `tokio` for non-blocking, asynchronous telemetry ingestion.
+- **Mission-Critical Validation:** Built-in validation layer for bounds checking of satellite readings (voltage, current, etc.).
+- **High-Performance Architecture:** Structured with modular logic, shared state for persistence, and thread-safe operations.
+- **Professional Observability:** Fully integrated with `tracing` for granular logging and instrumentation.
+- **Robust Error Handling:** Custom error types using `thiserror` for meaningful mission-ops feedback.
+- **CLI-First:** Flexible configuration via command-line arguments for port, log levels, and buffer capacity.
 
-- **Safety**: Memory-safe ingestion of instrument data without a GC.
-- **Speed**: Built on `tokio` and `axum` for asynchronous, non-blocking IO.
-- **Interoperability**: First-class JSON support for telemetry packets, designed to sit alongside your Laravel/Python stacks.
+## 🛠️ Architectural Overview
 
-## Getting Started
+- **`api/`**: Axum router and handlers for telemetry and health-check endpoints.
+- **`models/`**: Strongly-typed data structures for telemetry packets and responses.
+- **`telemetry/`**: Core logic including validators, error types, and shared state management.
+- **`tests/`**: Comprehensive test suite covering validation logic and system behavior.
+
+## 📦 Installation & Usage
 
 ### Prerequisites
+- [Rust](https://www.rust-lang.org/tools/install) (latest stable version)
 
-- [Rust & Cargo](https://rustup.rs/) (v1.60+)
-
-### Running Locally
-
+### Build
 ```bash
-cargo run
+cargo build --release
 ```
 
-### Ingesting Telemetry
+### Run
+```bash
+./target/release/drift-rs --port 3030 --log-level info
+```
+
+### Configuration Options
+- `-p, --port <PORT>`: Port to listen on (default: 3030)
+- `-l, --log-level <LEVEL>`: Log level (trace, debug, info, warn, error)
+- `-c, --capacity <CAPACITY>`: In-memory buffer size for telemetry packets
+
+## 📡 Ingesting Telemetry
+
+Submit telemetry packets via POST to `/telemetry`:
 
 ```bash
-curl -X POST http://127.0.0.1:3030/telemetry \
+curl -X POST http://localhost:3030/telemetry \
   -H "Content-Type: application/json" \
   -d '{
-    "source_id": "SAT-01",
-    "timestamp": "2026-03-17T17:43:00Z",
-    "instrument_id": "RADAR-A",
-    "readings": { "gain": 42.5, "status": "active" }
+    "source_id": "SAT-X1",
+    "timestamp": "2026-03-18T11:08:00Z",
+    "instrument_id": "EPS-01",
+    "readings": {
+      "battery_voltage": 24.5,
+      "solar_panel_current": 1.2
+    }
   }'
 ```
 
-## Future Roadmap
+## 🧪 Testing
+Run the suite of unit and integration tests:
+```bash
+cargo test
+```
 
-- [ ] **Protobuf Support**: Transition from JSON to Protobuf for wire-efficiency.
-- [ ] **Stream Persistence**: Direct integration with high-speed persistence layers (PostgreSQL/TimescaleDB).
-- [ ] **Simulation Replay**: A lightweight agent to replay telemetry streams for team testing.
+---
+*Developed by Karl Hill — Staff Aerospace Software Engineer.*

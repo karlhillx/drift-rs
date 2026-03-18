@@ -3,14 +3,31 @@ name = "drift-rs"
 version = "0.1.0"
 edition = "2021"
 authors = ["Karl Hill <karlhillx@gmail.com>"]
-description = "A fast, lightweight Drift telemetry and simulation data sink for aerospace and satellite ops."
+description = "High-performance aerospace telemetry ingestion engine."
 
 [dependencies]
+# Web & Async
+axum = { version = "0.7", features = ["macros"] }
+tokio = { version = "1", features = ["full"] }
+tower = { version = "0.4", features = ["util"] }
+tower-http = { version = "0.5", features = ["trace", "cors"] }
+
+# Serialization
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tokio = { version = "1", features = ["full"] }
-axum = "0.7"
-uuid = { version = "1.0", features = ["v4"] }
 chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.0", features = ["v4", "serde"] }
+
+# Observability
 tracing = "0.1"
-tracing-subscriber = "0.3"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Error Handling & Utils
+thiserror = "1.0"
+anyhow = "1.0"
+clap = { version = "4.4", features = ["derive", "env"] }
+derive_builder = "0.12"
+
+[dev-dependencies]
+reqwest = { version = "0.11", features = ["json"] }
+tokio-test = "0.4"
